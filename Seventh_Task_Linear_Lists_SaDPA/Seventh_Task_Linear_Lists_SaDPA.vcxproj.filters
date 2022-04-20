@@ -18,5 +18,13 @@
     <ClCompile Include="main.c++">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="stack_class.c++">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stack_class.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
