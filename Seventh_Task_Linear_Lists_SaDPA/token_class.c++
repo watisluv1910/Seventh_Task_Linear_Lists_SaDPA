@@ -19,6 +19,7 @@ void Token<T>::set_priority()
 	switch (value_)
 	{
 	case '!':
+	case '^':
 		priority_ = 4;
 		break;
 
@@ -50,6 +51,7 @@ void Token<T>::set_args_number()
 	case '+':
 	case '-':
 	case '=':
+	case '^':
 		args_number_ = 2;
 		break;
 
@@ -70,6 +72,7 @@ void Token<T>::set_left_assoc()
 	case '+':
 	case '-':
 	case '=':
+	case '^':
 		is_left_assoc_ = true;
 		break;
 	}
@@ -88,7 +91,7 @@ void Token<T>::set_state()
 	}
 	else
 	{
-		string operators_list = "+-*/!%=";
+		string operators_list = "+-*^/!%=";
 		if (operators_list.find(value_) != string::npos)
 		{
 			is_operator_ = true;

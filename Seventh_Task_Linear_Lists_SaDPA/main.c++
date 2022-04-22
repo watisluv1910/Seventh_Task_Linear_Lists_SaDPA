@@ -11,7 +11,7 @@ template <typename T>
 bool FindBracket(Stack<T>& stack, string& out_expression);
 template <typename T>
 bool CalculateLogicalExpression(Token<T>*& token, Token<T>*& top_token);
-bool ShuntingYard(string &in_expression, string &out_expression);
+bool ShuntingYard(string in_expression, string &out_expression);
 inline void OutputMenu();
 
 int main()
@@ -60,7 +60,7 @@ int main()
 				// Main converting algorithm call:
 				if (ShuntingYard(in_expression, out_expression))
 				{
-					std::cout << "\nYour postfix form expression is:\n"
+					std::cout << "\nYour prefix form expression is:\n"
 						<< out_expression << '\n';
 				}
 				// Converted expression string purification:
@@ -168,10 +168,12 @@ bool CalculateLogicalExpression(Token<T>* &token, Token<T>* &top_token)
 }
 
 // The algorithm processes an infix expression left-to-right
-// and generates the corresponding RPN (postfix) expression
-bool ShuntingYard(string &in_expression, string &out_expression)
+// and generates the corresponding PN (prefix) expression
+bool ShuntingYard(string in_expression, string &out_expression)
 {
 	// This algorithm is a variation of Dijkstra's "Shunting yard" algorithm
+
+	ReverseString(in_expression);
 
 	Stack<char> stack; // Stack of tokens (Token class objects) pointers
 
@@ -267,6 +269,8 @@ bool ShuntingYard(string &in_expression, string &out_expression)
 		out_expression += token->get_value();
 	}
 
+	ReverseString(out_expression);
+
 	return true;
 }
 
@@ -275,6 +279,6 @@ inline void OutputMenu()
 	std::cout << "Practical task num.7\nIKBO-03-21 Nasevich V.V.\n"
 		"Variant num. 19.\n\nMenu:\n"
 		"1)Enter <1> to enter the new expression.\n"
-		"2)Enter <2> to print the expression in postfix form (polish notation).\n"
+		"2)Enter <2> to print the expression in prefix form (polish notation).\n"
 		"3)Enter <0> to end the programm.\n\n";
 }
