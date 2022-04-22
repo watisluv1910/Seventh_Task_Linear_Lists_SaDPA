@@ -141,9 +141,11 @@
   <ItemGroup>
     <ClCompile Include="main.c++" />
     <ClCompile Include="stack_class.c++" />
+    <ClCompile Include="token_class.c++" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stack_class.h" />
+    <ClInclude Include="token_class.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

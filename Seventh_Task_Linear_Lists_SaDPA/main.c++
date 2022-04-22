@@ -1,117 +1,103 @@
+#include "stack_class.h"
 #include "stack_class.c++"
 
 #include <iostream>
 #include <algorithm>
-#include <vector>
 
 using std::string;
 
-bool DefinePriority(const char &token);
-bool IsLeftAssoc(const char &token);
-unsigned CountArgs(const char &token);
-bool IsOperator(const char &token);
-bool IsFunction(const char &token);
-bool IsIdentificator(const char &token);
-void ExpandString(string &expression);
+void ReverseString(string &expression);
+template <typename T>
+bool FindBracket(Stack<T>& stack, string& out_expression);
+template <typename T>
+bool CalculateLogicalExpression(Token<T>*& token, Token<T>*& top_token);
 bool ShuntingYard(string &in_expression, string &out_expression);
+inline void OutputMenu();
 
 int main()
 {
-	string in_expression, out_expression;
-	std::cin >> in_expression;
+	OutputMenu();
 
+	std::cout << "Your choise is:\n";
 
-	if (ShuntingYard(in_expression, out_expression))
+	unsigned path = 0; // Menu navigation variable
+	std::cin >> path;
+
+	// cin.clear and cin.ignore are used to prevent fake input:
+	std::cin.clear();
+	std::cin.ignore(std::numeric_limits<int>::max(), '\n');
+
+	string in_expression = ""; // Original expression
+	string out_expression = ""; // Converted expression
+
+	while (path)
 	{
-		std::cout << '\n' << out_expression << '\n';
+		switch (path)
+		{
+		case 1:
+
+			// Original expression string purification:
+			in_expression.clear();
+
+			std::cout << "\nEnter the new infix form expression:\n";
+
+			std::cin >> in_expression;
+
+			// cin.clear and cin.ignore are used to prevent fake input:
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<int>::max(), '\n');
+			break;
+		case 2:
+
+			if (!in_expression.size())
+			{
+				// If the original expression wasn't entered yet:
+				std::cerr << "\nError (1): An infix expression " // Error 1
+					<< "wasn't entered yet.\n";
+			}
+			else
+			{
+				// Main converting algorithm call:
+				if (ShuntingYard(in_expression, out_expression))
+				{
+					std::cout << "\nYour postfix form expression is:\n"
+						<< out_expression << '\n';
+				}
+				// Converted expression string purification:
+				out_expression.clear();
+			}
+			break;
+		default:
+
+			std::cerr << "\nError (0): Wrong path entered.\n"; // Error 0
+			break;
+		}
+
+		system("pause");
+		system("cls"); // clear screen
+
+		OutputMenu();
+
+		if (in_expression.size()) // If the original expression was entered:
+		{	
+			std::cout << "Your current infix form expression is:\n"
+				<< in_expression << '\n';
+		}
+
+		// Next menu navigation step:
+		std::cout << "\nYour choise is:\n";
+		std::cin >> path;
+
+		// cin.clear and cin.ignore are used to prevent fake input
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<int>::max(), '\n');		
 	}
-	
 	return 0;
 }
 
-bool DefinePriority(const char &token)
+void ReverseString(string &expression)
 {
-	switch (token)
-	{
-	case '!':
-		return 4;
-
-	case '*':
-	case '/':
-	case '%':
-		return 3;
-
-	case '+':
-	case '-':
-		return 2;
-
-	case '=':
-		return 1;
-	}
-	return 0;
-}
-
-bool IsLeftAssoc(const char &token)
-{
-	switch (token)
-	{
-	case '*':
-	case '/':
-	case '%':
-	case '+':
-	case '-':
-	case '=':
-		return true;
-
-	case '!':
-		return false;
-	}
-	return false;
-}
-
-unsigned CountArgs(const char &token)
-{
-	switch (token)
-	{
-	case '*':
-	case '/':
-	case '%':
-	case '+':
-	case '-':
-	case '=':
-		return 2;
-
-	case '!':
-		return 1;
-
-	default:
-		return token - 'A';
-	}
-	return 0;
-}
-
-bool IsOperator(const char &token)
-{
-	string operators = "+-*/!%=";
-	if (operators.find(token) != string::npos)
-	{
-		return true;
-	}
-	return false;
-}
-
-bool IsFunction(const char &token)
-{
-	return (token >= 'A' && token <= 'Z');
-}
-
-bool IsIdentificator(char &token)
-{
-	return (token >= '0' && token <= '9' || token >= 'a' && token <= 'z');
-}
-
-void ExpandString(string& expression)
-{
+	// Brackets rearrangement is required ro correctly display reversed string:
 	for (size_t i = 0; i < expression.size(); i++)
 	{
 		if (expression.at(i) == '(')
@@ -127,70 +113,108 @@ void ExpandString(string& expression)
 			continue;
 		}
 	}
+	// The loop goes to the middle of the string:
 	for (size_t i = 0; i < expression.size() / 2; i++)
 	{
+		// Permutation of the current and its opposite element:
 		std::swap(expression.at(i), expression.at(expression.size() - i - 1));
 	}
 }
 
+// The algorithm adds stack content to the 
+// converted string untill the left bracket arrives
+template <typename T>
+bool FindBracket(Stack<T> &stack, string& out_expression)
+{
+	// In general adds the expression inside the brackets to the out_expression
+
+	bool bracket_ex = false; // Defines bracket exsistance
+	while (!stack.Empty())
+	{
+		Token<char>* top_token = stack.Top();
+
+		if (top_token->get_value() == '(')
+		{
+			bracket_ex = true;
+			break;
+		}
+		else
+		{
+			// Removing the last token from the stack and 
+			// adding it to the converted string:
+			out_expression += stack.Pop()->get_value();
+		}
+	}
+	return bracket_ex; 
+}
+
+// The alorithm calculates logical expression in simplified form
+template <typename T>
+bool CalculateLogicalExpression(Token<T>* &token, Token<T>* &top_token) 
+{
+	// While at the top of the stack there is a top_token operator, 
+	// as well as the token operator is left-associative AND its priority 
+	// less OR the same than that of the top_token operator, OR 
+	// the token operator is right-associative AND 
+	// its priority is less than that of the top_token operator
+
+	const bool a = top_token->get_op_state(); // top_token is an operator
+	const bool b = top_token->get_left_assoc(); // top_token is left associative
+	const unsigned c = top_token->get_priority(); // top_token priority
+	const bool d = token->get_left_assoc(); // token is left associative
+	const unsigned e = token->get_priority(); // token priority
+
+	return a && (b && (e <= c) || !d && (e < c));
+}
+
+// The algorithm processes an infix expression left-to-right
+// and generates the corresponding RPN (postfix) expression
 bool ShuntingYard(string &in_expression, string &out_expression)
 {
-	ExpandString(in_expression);
+	// This algorithm is a variation of Dijkstra's "Shunting yard" algorithm
 
-	std::cout << in_expression << '\n';
+	Stack<char> stack; // Stack of tokens (Token class objects) pointers
 
-	Stack<char> stack;
+	// Iteration over each symbol of the original expression: 
 
-	for (auto &token : in_expression)
-	{
-		std::cout << '\n' << token;
-		if (token != ' ')
+	for (auto &in_element : in_expression)
+	{	
+		// Pointer at current token object
+		Token<char>* token = new Token<char>(in_element);
+
+		if (token->get_value() != ' ') // Passing space symbols
 		{
-			if (IsIdentificator(token))
+			if (token->get_ident_state())
 			{
-				out_expression += token;
+				// Adding the current token to the
+				// converted expression:
+				out_expression += token->get_value();
 			}
-			else if (IsFunction(token))
+			else if (token->get_func_state())
 			{
 				stack.Push(token);
 			}
-			else if (token == ',')
+			// If token is a separator of func arguments:
+			else if (token->get_value() == ',')
 			{
-				bool par_ex = false; // parenthesis_exsistance
-				while (stack.get_size())
+				if (!FindBracket(stack, out_expression))
 				{
-					char temp_token = stack.Top();
-					if (temp_token == '(')
-					{
-						par_ex = true;
-						break;
-					}
-					else
-					{
-						out_expression += temp_token;
-						stack.Pop();
-					}
-				}
-				if (!par_ex)
-				{
-					std::cerr << "\nError _ 1 _ separator or parentheses mismatched\n";
+					std::cerr << "\nError (2): Separator or " // Error 2
+						<< "bracket mismatched.\n";
 					return false;
 				}
 			}
-			else if (IsOperator(token))
+			else if (token->get_op_state())
 			{
-				while (stack.get_size())
+				while (!stack.Empty())
 				{
-					char temp_token = stack.Top();
+					Token<char>* top_token = stack.Top();
 
-					if (IsOperator(temp_token) 
-						&& (IsLeftAssoc(token) 
-							&& (DefinePriority(token) <= DefinePriority(temp_token))
-						|| !IsLeftAssoc(token) 
-							&& (DefinePriority(token) < DefinePriority(temp_token))))
+					if (CalculateLogicalExpression(token, top_token))
 					{
-						out_expression += temp_token;
-						stack.Pop();
+						// Removing the last token from the stack and 
+						// adding it to the converted string:
+						out_expression += stack.Pop()->get_value();
 					}
 					else
 					{
@@ -199,68 +223,58 @@ bool ShuntingYard(string &in_expression, string &out_expression)
 				}
 				stack.Push(token);
 			}
-			else if (token == '(')
+			else if (token->get_value() == '(')
 			{
 				stack.Push(token);
 			}
-			else if (token == ')')
+			else if (token->get_value() == ')')
 			{
-				bool par_ex = false; // parenthesis_exsistance
-				while (stack.get_size())
+				if (!FindBracket(stack, out_expression))
 				{
-					char temp_token = stack.Top();
-					if (temp_token == '(')
-					{
-						par_ex = true;
-						break;
-					}
-					else
-					{
-						out_expression += temp_token;
-						stack.Pop();
-					}
-				}
-				if (!par_ex)
-				{
-					std::cerr << "\nError _ 2 _ parentheses mismatched\n";
+					std::cerr << "\nError (3): Bracket mismatched.\n"; // Error 3
 					return false;
 				}
 				stack.Pop();
-				if (stack.get_size())
+				if (!stack.Empty())
 				{
-					char temp_token = stack.Top();
-					if (IsFunction(temp_token))
+					Token<char>* top_token = stack.Top();
+					if (top_token->get_func_state())
 					{
-						out_expression += temp_token;
-						stack.Pop();
+						// Removing top_token from the stack and 
+						// adding it to the converted string:
+						out_expression += stack.Pop()->get_value();
 					}
 				}
 			}
 			else
 			{
-				std::cerr << "\nError _ 3 _ unknown token\n";
-				return false; // unknown token
+				std::cerr << "\nError (4): Unknown token.\n"; // Error 4
+				return false;
 			}
 		}
 	}
-	while (stack.get_size())
+	while (!stack.Empty())
 	{
-		char temp_token = stack.Top();
-		if (temp_token == '(' || temp_token == ')')
+		Token<char>* token = stack.Pop();
+
+		if (token->get_value() == '(' || token->get_value() == ')')
 		{
-			std::cerr << "\nError _ 4 _ parentheses mismatched\n";
+			std::cerr << "\nError (5): Bracket mismatched.\n"; // Error 5
 			return false;
 		}
-		out_expression += temp_token;
-		stack.Pop();
+		// Removing the last token from the stack and 
+		// adding it to the converted string:
+		out_expression += token->get_value();
 	}
-
-	ExpandString(out_expression);
 
 	return true;
 }
 
-//void OutputMenu(const string& expression)
-//{
-//
-//}
+inline void OutputMenu()
+{
+	std::cout << "Practical task num.7\nIKBO-03-21 Nasevich V.V.\n"
+		"Variant num. 19.\n\nMenu:\n"
+		"1)Enter <1> to enter the new expression.\n"
+		"2)Enter <2> to print the expression in postfix form (polish notation).\n"
+		"3)Enter <0> to end the programm.\n\n";
+}
